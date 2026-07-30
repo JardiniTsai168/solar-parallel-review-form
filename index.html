@@ -333,6 +333,7 @@
         <div class="actions">
           <button class="primary" type="button" id="saveDraft">儲存草稿</button>
           <button class="primary" type="button" id="exportPdf">匯出官方 PDF</button>
+          <button class="secondary" type="button" id="exportWord">匯出 Word</button>
           <button class="secondary" type="button" id="exportJson">匯出 JSON</button>
           <button class="danger" type="button" id="clearDraft">清空草稿</button>
         </div>
@@ -757,6 +758,102 @@
         setStatus("JSON 已匯出。");
       }
 
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      function fieldRows(data, pairs) {
+        return pairs
+          .map(([label, key]) => {
+            const value = escapeHtml(data[key] || "").replaceAll("\n", "<br />");
+            return `<tr><th>${label}</th><td>${value || "&nbsp;"}</td></tr>`;
+          })
+          .join("");
+      }
+
+      function exportWord() {
+        saveDraft();
+        const data = getFormData();
+        const sections = [
+          {
+            title: "基本資料",
+            rows: [
+              ["申請日期", "applicationDate"],
+              ["設置者名稱", "ownerName"],
+              ["負責人", "principalName"],
+              ["連絡電話", "ownerPhone"],
+              ["通訊處", "ownerAddress"],
+              ["設置場所或地點", "siteAddress"],
+              ["連絡人", "contactPerson"],
+              ["連絡人電話", "contactPhone"],
+              ["連絡人通訊處", "contactAddress"],
+            ],
+          },
+          {
+            title: "案件配置",
+            rows: [
+              ["設置分類", "solarCategory"],
+              ["裝置容量_新增設_瓩", "installedNew"],
+              ["裝置容量_合計_瓩", "installedTotal"],
+              ["躉售容量_新增設_瓩", "saleNew"],
+              ["躉售容量_合計_瓩", "saleTotal"],
+              ["併聯方式", "parallelMode"],
+              ["躉售模式", "saleMode"],
+              ["責任分界點", "boundaryVoltage"],
+              ["併聯點電壓", "parallelPointVoltage"],
+              ["預計併聯日期", "estimatedParallelDate"],
+            ],
+          },
+          {
+            title: "其他事項",
+            rows: [["備註", "otherNotes"]],
+          },
+        ];
+
+        const html = `<!doctype html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+  <head>
+    <meta charset="utf-8" />
+    <title>再生能源發電設備併聯審查申請表</title>
+    <style>
+      body { font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; color: #1a1a1a; }
+      h1 { font-size: 20pt; margin: 0 0 18px; }
+      h2 { font-size: 14pt; margin: 22px 0 10px; color: #1a1a5e; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+      th, td { border: 1px solid #cfcfe8; padding: 8px 10px; vertical-align: top; text-align: left; }
+      th { width: 28%; background: #f7f1f6; }
+    </style>
+  </head>
+  <body>
+    <h1>再生能源發電設備併聯審查申請表</h1>
+    ${sections
+      .map(
+        (section) => `
+      <h2>${section.title}</h2>
+      <table>
+        <tbody>${fieldRows(data, section.rows)}</tbody>
+      </table>`
+      )
+      .join("")}
+  </body>
+</html>`;
+
+        const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "再生能源發電設備併聯審查申請表.doc";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setStatus("Word 已匯出。");
+      }
+
       function clearDraft() {
         localStorage.removeItem(storageKey);
         form.reset();
@@ -888,6 +985,7 @@
 
       document.getElementById("saveDraft").addEventListener("click", saveDraft);
       document.getElementById("exportPdf").addEventListener("click", exportPdf);
+      document.getElementById("exportWord").addEventListener("click", exportWord);
       document.getElementById("exportJson").addEventListener("click", exportJson);
       document.getElementById("clearDraft").addEventListener("click", clearDraft);
       form.addEventListener("change", saveDraft);
