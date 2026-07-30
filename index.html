@@ -950,6 +950,63 @@
           .join("</w:t><w:br/><w:t>");
       }
 
+      const CONTACT_PERSON_CELL_PATTERN =
+        /<w:tc\b(?:(?!<\/w:tc>)[\s\S])*?\{\{contactPerson\}\}(?:(?!<\/w:tc>)[\s\S])*?<\/w:tc>/g;
+      const CONTACT_PERSON_SPACING =
+        '<w:spacing w:before="180" w:after="0" w:line="240" w:lineRule="exact"/>';
+
+      function adjustContactPersonCell(cellXml) {
+        let next = cellXml;
+
+        if (next.includes("<w:tcMar>")) {
+          next = next
+            .replace(/<w:top w:w="\d+" w:type="dxa"\/>/, '<w:top w:w="120" w:type="dxa"/>')
+            .replace(/<w:bottom w:w="\d+" w:type="dxa"\/>/, '<w:bottom w:w="120" w:type="dxa"/>');
+        } else {
+          next = next.replace(
+            "</w:tcPr>",
+            '<w:tcMar><w:top w:w="120" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="120" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tcMar></w:tcPr>'
+          );
+        }
+
+        if (next.includes("<w:pPr>")) {
+          if (/<w:spacing\b[^>]*\/>/.test(next)) {
+            next = next.replace(/<w:spacing\b[^>]*\/>/, CONTACT_PERSON_SPACING);
+          } else {
+            next = next.replace("<w:pPr>", `<w:pPr>${CONTACT_PERSON_SPACING}`);
+          }
+        } else {
+          next = next.replace("<w:p>", `<w:p><w:pPr>${CONTACT_PERSON_SPACING}</w:pPr>`);
+        }
+
+        if (!next.includes('<w:vAlign w:val="center"/>')) {
+          next = next.replace("</w:tcPr>", '<w:vAlign w:val="center"/></w:tcPr>');
+        }
+
+        return next;
+      }
+
+      function adjustContactPersonRows(documentXml) {
+        return documentXml.replace(/<w:tr\b[\s\S]*?<\/w:tr>/g, (rowXml) => {
+          const isContactRow =
+            rowXml.includes("{{contactPerson}}") ||
+            (rowXml.includes("<w:vMerge/>") && rowXml.includes("連絡電話"));
+
+          if (!isContactRow) return rowXml;
+
+          return rowXml.replace(
+            /<w:trHeight w:val="(\d+)"\/>/g,
+            '<w:trHeight w:val="$1" w:hRule="exact"/>'
+          );
+        });
+      }
+
+      function applyTemplateLayoutFixes(documentXml) {
+        return adjustContactPersonRows(
+          documentXml.replace(CONTACT_PERSON_CELL_PATTERN, adjustContactPersonCell)
+        );
+      }
+
       function rocDateString(value) {
         if (!value) return "";
         const [year, month, day] = value.split("-").map(Number);
@@ -1009,6 +1066,7 @@
         const templateBytes = await getWordTemplateBytes();
         const zip = new PizZip(templateBytes);
         let documentXml = zip.file("word/document.xml").asText();
+        documentXml = applyTemplateLayoutFixes(documentXml);
         const payload = buildWordPayload(data);
 
         for (const [key, value] of Object.entries(payload)) {
