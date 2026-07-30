@@ -555,6 +555,9 @@
         template: "./official-template-fillable.docx",
       };
 
+      const defaultOtherNotes = `配電級再生能源■需□不需 台電公司於核發審查意見書後即進行細部協商。(註12)勾選日期：
+配電級再生能源■需□不需 台電公司於核發審查意見書後即進行外線設計。(註13)勾選日期：`;
+
       function toPdfY(page, yFromTop) {
         return page.getHeight() - yFromTop;
       }
@@ -797,6 +800,7 @@
       }
 
       function buildWordPayload(data) {
+        const normalizedOtherNotes = normalizeText(data.otherNotes).replace(/\r/g, "\n");
         return {
           caseNumber: "",
           districtOffice: "",
@@ -823,7 +827,7 @@
           parallelPointVoltage: normalizeText(data.parallelPointVoltage),
           estimatedParallelDateRoc: rocDateString(data.estimatedParallelDate),
           relatedCaseNumber: "",
-          otherNotes: normalizeText(data.otherNotes).replace(/\r/g, "\n"),
+          otherNotes: normalizedOtherNotes || defaultOtherNotes,
           applicationDateRoc: rocDateString(data.applicationDate),
         };
       }
