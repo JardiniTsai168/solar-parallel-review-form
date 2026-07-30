@@ -327,8 +327,8 @@
         <h1>再生能源發電設備併聯審查申請表</h1>
         <div class="document-note">114 年 03 月 11 日修正版欄位結構</div>
         <p>
-          先把案件資料集中填進來，讓同一批資料不要一直重填。這版先處理併聯審查申請表欄位，
-          已加上本機草稿暫存與 JSON 匯出，方便你們拿真實案件測流程。
+          把案件資料集中填進來，按一下就直接匯出台電官方版型 PDF。表單欄位有值才填，沒資料就留白，
+          避免因為硬塞內容把版面擠壞。
         </p>
         <div class="actions">
           <button class="primary" type="button" id="saveDraft">儲存草稿</button>
@@ -526,7 +526,7 @@
         <section class="section">
           <div class="section-header">
             <h2>案件補充與申請選項</h2>
-            <p>這區多半是流程層面的欄位，後面可以跟送件進度綁一起。</p>
+            <p>這裡保留台電申請表會用到的補充內容，會直接印進官方 PDF 第二頁。</p>
           </div>
           <div class="section-body">
             <div class="field">
@@ -538,8 +538,7 @@
         </section>
 
         <p class="footer-note">
-          這版先做 `資料蒐集表`，還沒接 PDF 排版、欄位驗證規則、附件管理與台電送件流程。
-          下一步如果要接系統，我會建議先補 `必填/選填規則` 跟 `欄位對應 PDF 模板`。
+          匯出時會直接套進官方版型 PDF。若看到舊資料，先按一次 `清空草稿` 再重填。
         </p>
       </form>
     </div>
@@ -547,7 +546,7 @@
     <script src="./vendor/pdf-lib.min.js"></script>
     <script src="./vendor/fontkit.umd.min.js"></script>
     <script>
-      const storageKey = "solar_parallel_review_form_draft_v1";
+      const storageKey = "solar_parallel_review_form_draft_v2";
       const form = document.getElementById("reviewForm");
       const status = document.getElementById("status");
       const { PDFDocument, rgb } = PDFLib;
@@ -574,6 +573,13 @@
 
       function normalizeText(value) {
         return (value || "").toString().trim();
+      }
+
+      function normalizePrintableNotes(value) {
+        return normalizeText(value)
+          .replace(/\r/g, "")
+          .replace(/[■□]/g, (mark) => mark)
+          .replace(/\u00a0/g, " ");
       }
 
       function drawText(page, font, text, x, yFromTop, size = 11) {
@@ -617,7 +623,7 @@
       }
 
       function drawWrappedText(page, font, text, box, size = 10.5, lineGap = 3) {
-        const content = normalizeText(text);
+        const content = normalizePrintableNotes(text);
         if (!content) return;
         const paragraphs = content.split(/\n+/).filter(Boolean);
         const lines = [];
@@ -726,6 +732,15 @@
       function clearDraft() {
         localStorage.removeItem(storageKey);
         form.reset();
+        form.elements.contactPerson.value = "鄒侑廷";
+        form.elements.contactPhone.value = "0939255192";
+        form.elements.boundaryVoltage.value = "單 相 3 線 110/220 伏";
+        form.elements.parallelPointVoltage.value = "單 相 3 線 110/220 伏";
+        form.elements.estimatedParallelDate.value = "2026-12-31";
+        form.elements.otherNotes.value = `配電級再生能源■需□不需 台電公司於核發審查意見書後即進行細部協商。(註12)勾選日期：
+配電級再生能源■需□不需 台電公司於核發審查意見書後即進行外線設計。(註13)勾選日期：`;
+        form.elements.parallelMode.value = "併聯台電外線";
+        form.elements.saleMode.value = "全額躉售";
         setStatus("本機草稿已清空。");
       }
 
