@@ -33,7 +33,7 @@
       }
 
       .shell {
-        max-width: 1240px;
+        max-width: 1180px;
         margin: 0 auto;
         padding: 32px 20px 64px;
       }
@@ -41,7 +41,14 @@
       .hero {
         display: grid;
         gap: 12px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
+        padding: 28px;
+        border-radius: 28px;
+        border: 1px solid rgba(216, 205, 192, 0.9);
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 247, 240, 0.88)),
+          rgba(255, 251, 247, 0.92);
+        box-shadow: var(--shadow);
       }
 
       .eyebrow {
@@ -70,7 +77,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        margin-top: 8px;
+        margin-top: 4px;
       }
 
       button {
@@ -108,6 +115,33 @@
         min-height: 24px;
         color: var(--accent-strong);
         font-weight: 700;
+      }
+
+      .overview {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 6px;
+      }
+
+      .overview-card {
+        padding: 14px 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(216, 205, 192, 0.9);
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .overview-card span {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.78rem;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 1rem;
       }
 
       .document-note {
@@ -158,6 +192,10 @@
         padding: 22px;
         display: grid;
         gap: 18px;
+      }
+
+      .section-body.tight {
+        gap: 14px;
       }
 
       .grid {
@@ -236,13 +274,13 @@
       }
 
       .choice-group {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 10px;
       }
 
       .choice {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: 8px;
         padding: 10px 14px;
@@ -266,6 +304,10 @@
         border-radius: 18px;
         background: var(--accent-soft);
         border: 1px solid rgba(31, 122, 95, 0.12);
+      }
+
+      .soft-panel .hint {
+        margin-top: -2px;
       }
 
       .footer-note {
@@ -312,6 +354,7 @@
       }
 
       @media (max-width: 920px) {
+        .overview,
         .grid.cols-2,
         .grid.cols-3,
         .grid.cols-4 {
@@ -327,14 +370,26 @@
         <h1>再生能源發電設備併聯審查申請表</h1>
         <div class="document-note">114 年 03 月 11 日修正版欄位結構</div>
         <p>
-          把案件資料集中填進來，按一下就直接匯出台電官方版型 PDF。表單欄位有值才填，沒資料就留白，
-          避免因為硬塞內容把版面擠壞。
+          先把案件核心資料填完，再直接匯出台電表單。畫面只保留真的會用到的欄位，避免邊填邊找。
         </p>
+        <div class="overview">
+          <div class="overview-card">
+            <span>固定設備型別</span>
+            <strong>第三型 / 太陽光電</strong>
+          </div>
+          <div class="overview-card">
+            <span>預設聯絡窗口</span>
+            <strong>鄒侑廷 / 0939255192</strong>
+          </div>
+          <div class="overview-card">
+            <span>可匯出格式</span>
+            <strong>官方 PDF / Word</strong>
+          </div>
+        </div>
         <div class="actions">
           <button class="primary" type="button" id="saveDraft">儲存草稿</button>
           <button class="primary" type="button" id="exportPdf">匯出官方 PDF</button>
           <button class="secondary" type="button" id="exportWord">匯出 Word</button>
-          <button class="secondary" type="button" id="exportJson">匯出 JSON</button>
           <button class="danger" type="button" id="clearDraft">清空草稿</button>
         </div>
         <div class="status" id="status"></div>
@@ -346,12 +401,12 @@
             <h2>基本資料</h2>
             <p>先收案件身分、窗口與場址資訊。</p>
           </div>
-          <div class="section-body">
+          <div class="section-body tight">
             <div class="grid cols-4">
               <div class="field">
                 <label for="applicationDate">申請日期</label>
                 <input id="applicationDate" name="applicationDate" type="date" />
-                <div class="hint">選填，這欄保持機動。</div>
+                <div class="hint">可先留白，最後再補。</div>
               </div>
             </div>
 
@@ -363,7 +418,7 @@
               <div class="field">
                 <label for="principalName">負責人</label>
                 <input id="principalName" name="principalName" type="text" />
-                <div class="hint">選填。</div>
+                <div class="hint">沒有就先留白。</div>
               </div>
               <div class="field">
                 <label for="ownerPhone">連絡電話</label>
@@ -402,7 +457,7 @@
         <section class="section">
           <div class="section-header">
             <h2>設備型別與能源類別</h2>
-            <p>這區是後續法規判斷和文件分支的核心。</p>
+            <p>固定條件直接鎖住，只留下太陽光電的必要選項。</p>
           </div>
           <div class="section-body">
             <div class="grid cols-2">
@@ -411,17 +466,16 @@
                 <div class="value-chip">第三型</div>
                 <input type="hidden" name="equipmentType" value="第三型" />
               </div>
-
-              <div class="field soft-panel">
+              <fieldset class="field soft-panel">
                 <label>再生能源類別</label>
                 <div class="value-chip">太陽光電</div>
                 <input type="hidden" name="energyType" value="太陽光電" />
-              </div>
+              </fieldset>
             </div>
 
             <div class="grid cols-2">
               <fieldset class="field soft-panel">
-                <div class="legend">設置分類：太陽光電</div>
+                <div class="legend">設置分類</div>
                 <div class="choice-group">
                   <label class="choice"><input type="radio" name="solarCategory" value="屋頂" />屋頂</label>
                   <label class="choice"><input type="radio" name="solarCategory" value="地面" />地面</label>
@@ -429,8 +483,8 @@
                 </div>
               </fieldset>
               <div class="field soft-panel">
-                <label>其他設置分類</label>
-                <div class="hint">第一版已移除，固定只處理太陽光電。</div>
+                <label>填寫提醒</label>
+                <div class="hint">這版先專心處理太陽光電，其他能源與特殊分支先不混進來。</div>
               </div>
             </div>
           </div>
@@ -439,10 +493,10 @@
         <section class="section">
           <div class="section-header">
             <h2>容量資料</h2>
-            <p>目前先保留原表欄位結構，後面要做公式再接上。</p>
+            <p>容量欄位照台電表單分開放，避免新增設和合計填錯位置。</p>
           </div>
           <div class="section-body">
-            <div class="grid cols-3">
+            <div class="grid cols-2">
               <div class="field">
                 <label for="installedNew">裝置容量_新增設_瓩</label>
                 <input id="installedNew" name="installedNew" type="number" step="0.01" />
@@ -469,9 +523,9 @@
         <section class="section">
           <div class="section-header">
             <h2>併聯與售電方式</h2>
-            <p>這一區之後會直接影響你們要生成哪種文件內容。</p>
+            <p>先決定併聯路徑和售電模式，後面匯出的文件才不會走錯分支。</p>
           </div>
-          <div class="section-body">
+          <div class="section-body tight">
             <fieldset class="field">
               <div class="legend">預計併聯方式</div>
               <div class="choice-group">
@@ -497,7 +551,7 @@
         <section class="section">
           <div class="section-header">
             <h2>電壓與時程</h2>
-            <p>把責任分界點、併聯點與預計時程先收好。</p>
+            <p>這三格是最常回頭修改的欄位，集中放在一起比較好找。</p>
           </div>
           <div class="section-body">
             <div class="grid cols-3">
@@ -520,7 +574,7 @@
         <section class="section">
           <div class="section-header">
             <h2>案件補充與申請選項</h2>
-            <p>這裡保留台電申請表會用到的補充內容，會直接印進官方 PDF 第二頁。</p>
+            <p>有特殊說明再填，留白也沒問題。Word 匯出時仍會自動補預設句型。</p>
           </div>
           <div class="section-body">
             <div class="field">
@@ -750,20 +804,6 @@
         } catch {
           setStatus("草稿讀取失敗，已略過。");
         }
-      }
-
-      function exportJson() {
-        const payload = JSON.stringify(getFormData(), null, 2);
-        const blob = new Blob([payload], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "parallel-review-application.json";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        setStatus("JSON 已匯出。");
       }
 
       function escapeXml(value) {
@@ -1014,7 +1054,6 @@
       document.getElementById("saveDraft").addEventListener("click", saveDraft);
       document.getElementById("exportPdf").addEventListener("click", exportPdf);
       document.getElementById("exportWord").addEventListener("click", exportWord);
-      document.getElementById("exportJson").addEventListener("click", exportJson);
       document.getElementById("clearDraft").addEventListener("click", clearDraft);
       form.addEventListener("change", saveDraft);
 
