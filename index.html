@@ -539,15 +539,21 @@
 
     <script src="./vendor/pdf-lib.min.js"></script>
     <script src="./vendor/fontkit.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pizzip@3.2.0/dist/pizzip.min.js"></script>
     <script>
       const storageKey = "solar_parallel_review_form_draft_v2";
       const form = document.getElementById("reviewForm");
       const status = document.getElementById("status");
       const { PDFDocument, rgb } = PDFLib;
+      let docxTemplatePromise;
 
       const pdfAssets = {
         template: "./assets/official-template.pdf",
         font: "./assets/NotoSansTC.ttf",
+      };
+
+      const wordAssets = {
+        template: "./official-template-fillable.docx",
       };
 
       function toPdfY(page, yFromTop) {
@@ -758,100 +764,120 @@
         setStatus("JSON 已匯出。");
       }
 
-      function escapeHtml(value) {
-        return String(value ?? "")
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;");
+      function escapeXml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&apos;");
       }
 
-      function fieldRows(data, pairs) {
-        return pairs
-          .map(([label, key]) => {
-            const value = escapeHtml(data[key] || "").replaceAll("\n", "<br />");
-            return `<tr><th>${label}</th><td>${value || "&nbsp;"}</td></tr>`;
-          })
-          .join("");
+      function xmlValue(value) {
+        const normalized = String(value ?? "");
+        if (!normalized) return "";
+        return normalized
+          .split("\n")
+          .map((line) => escapeXml(line))
+          .join("</w:t><w:br/><w:t>");
       }
 
-      function exportWord() {
-        saveDraft();
-        const data = getFormData();
-        const sections = [
-          {
-            title: "基本資料",
-            rows: [
-              ["申請日期", "applicationDate"],
-              ["設置者名稱", "ownerName"],
-              ["負責人", "principalName"],
-              ["連絡電話", "ownerPhone"],
-              ["通訊處", "ownerAddress"],
-              ["設置場所或地點", "siteAddress"],
-              ["連絡人", "contactPerson"],
-              ["連絡人電話", "contactPhone"],
-              ["連絡人通訊處", "contactAddress"],
-            ],
-          },
-          {
-            title: "案件配置",
-            rows: [
-              ["設置分類", "solarCategory"],
-              ["裝置容量_新增設_瓩", "installedNew"],
-              ["裝置容量_合計_瓩", "installedTotal"],
-              ["躉售容量_新增設_瓩", "saleNew"],
-              ["躉售容量_合計_瓩", "saleTotal"],
-              ["併聯方式", "parallelMode"],
-              ["躉售模式", "saleMode"],
-              ["責任分界點", "boundaryVoltage"],
-              ["併聯點電壓", "parallelPointVoltage"],
-              ["預計併聯日期", "estimatedParallelDate"],
-            ],
-          },
-          {
-            title: "其他事項",
-            rows: [["備註", "otherNotes"]],
-          },
-        ];
+      function rocDateString(value) {
+        if (!value) return "";
+        const [year, month, day] = value.split("-").map(Number);
+        if (!year || !month || !day) return "";
+        return `${year - 1911} 年 ${month} 月 ${day} 日`;
+      }
 
-        const html = `<!doctype html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-  <head>
-    <meta charset="utf-8" />
-    <title>再生能源發電設備併聯審查申請表</title>
-    <style>
-      body { font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; color: #1a1a1a; }
-      h1 { font-size: 20pt; margin: 0 0 18px; }
-      h2 { font-size: 14pt; margin: 22px 0 10px; color: #1a1a5e; }
-      table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-      th, td { border: 1px solid #cfcfe8; padding: 8px 10px; vertical-align: top; text-align: left; }
-      th { width: 28%; background: #f7f1f6; }
-    </style>
-  </head>
-  <body>
-    <h1>再生能源發電設備併聯審查申請表</h1>
-    ${sections
-      .map(
-        (section) => `
-      <h2>${section.title}</h2>
-      <table>
-        <tbody>${fieldRows(data, section.rows)}</tbody>
-      </table>`
-      )
-      .join("")}
-  </body>
-</html>`;
+      function solarCategoryLine(value) {
+        const selected = normalizeText(value);
+        const options = ["屋頂", "地面", "水面"];
+        return options
+          .map((option) => (option === selected ? `■${option}` : `□${option}`))
+          .join("  ");
+      }
 
-        const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+      function buildWordPayload(data) {
+        return {
+          caseNumber: "",
+          districtOffice: "",
+          ownerName: normalizeText(data.ownerName),
+          principalName: normalizeText(data.principalName),
+          electricNumber: "",
+          ownerAddress: normalizeText(data.ownerAddress),
+          ownerPhone: normalizeText(data.ownerPhone),
+          siteAddress: normalizeText(data.siteAddress),
+          contactPerson: normalizeText(data.contactPerson),
+          contactAddress: normalizeText(data.contactAddress),
+          contactPhone: normalizeText(data.contactPhone),
+          solarCategoryLine: solarCategoryLine(data.solarCategory),
+          installedExisting: "",
+          installedNew: normalizeText(data.installedNew),
+          installedTotal: normalizeText(data.installedTotal),
+          saleExisting: "",
+          saleNew: normalizeText(data.saleNew),
+          saleTotal: normalizeText(data.saleTotal),
+          innerLineNumber: "",
+          contractType: "",
+          contractCapacity: "",
+          boundaryVoltage: normalizeText(data.boundaryVoltage),
+          parallelPointVoltage: normalizeText(data.parallelPointVoltage),
+          estimatedParallelDateRoc: rocDateString(data.estimatedParallelDate),
+          relatedCaseNumber: "",
+          otherNotes: normalizeText(data.otherNotes).replace(/\r/g, "\n"),
+          applicationDateRoc: rocDateString(data.applicationDate),
+        };
+      }
+
+      async function getWordTemplateBytes() {
+        if (!docxTemplatePromise) {
+          docxTemplatePromise = fetch(wordAssets.template).then((response) => response.arrayBuffer());
+        }
+        return docxTemplatePromise;
+      }
+
+      async function renderWordBuffer(data) {
+        const templateBytes = await getWordTemplateBytes();
+        const zip = new PizZip(templateBytes);
+        let documentXml = zip.file("word/document.xml").asText();
+        const payload = buildWordPayload(data);
+
+        for (const [key, value] of Object.entries(payload)) {
+          documentXml = documentXml.replaceAll(`{{${key}}}`, xmlValue(value));
+        }
+
+        zip.file("word/document.xml", documentXml);
+        return zip.generate({ type: "uint8array" });
+      }
+
+      function downloadBlob(data, type, filename) {
+        const blob = new Blob([data], { type });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "再生能源發電設備併聯審查申請表.doc";
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-        setStatus("Word 已匯出。");
+      }
+
+      async function exportWord() {
+        saveDraft();
+        setStatus("正在產出 Word...");
+
+        try {
+          const output = await renderWordBuffer(getFormData());
+          downloadBlob(
+            output,
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "再生能源發電設備併聯審查申請表.docx"
+          );
+          setStatus("Word 已匯出。");
+        } catch (error) {
+          console.error(error);
+          setStatus("Word 匯出失敗，請稍後再試。");
+        }
       }
 
       function clearDraft() {
