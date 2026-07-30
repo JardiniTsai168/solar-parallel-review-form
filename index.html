@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>併聯審查申請表</title>
+    <style>
+      :root {
+        --bg: #f6efe7;
+        --panel: rgba(255, 251, 247, 0.92);
+        --ink: #1e2b2d;
+        --muted: #5f6d70;
+        --line: #d8cdc0;
+        --accent: #1f7a5f;
+        --accent-strong: #165a46;
+        --accent-soft: #dff1ea;
+        --warn: #8f4b2e;
+        --shadow: 0 22px 60px rgba(47, 42, 36, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(31, 122, 95, 0.15), transparent 26%),
+          radial-gradient(circle at top right, rgba(196, 119, 44, 0.14), transparent 24%),
+          linear-gradient(180deg, #fbf7f1 0%, var(--bg) 100%);
+      }
+
+      .shell {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        font-size: 0.78rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 860px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      .primary {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .secondary {
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+
+      .danger {
+        background: #fff3ee;
+        color: var(--warn);
+        border: 1px solid #e8c4b2;
+      }
+
+      .status {
+        min-height: 24px;
+        color: var(--accent-strong);
+        font-weight: 700;
+      }
+
+      .document-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(31, 122, 95, 0.1);
+        color: var(--accent-strong);
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      form {
+        display: grid;
+        gap: 18px;
+      }
+
+      .section {
+        background: var(--panel);
+        border: 1px solid rgba(216, 205, 192, 0.9);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .section-header {
+        padding: 18px 22px;
+        background: linear-gradient(90deg, rgba(31, 122, 95, 0.08), rgba(31, 122, 95, 0));
+        border-bottom: 1px solid rgba(216, 205, 192, 0.85);
+      }
+
+      .section-header h2 {
+        margin: 0;
+        font-size: 1.05rem;
+        letter-spacing: 0.01em;
+      }
+
+      .section-header p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .section-body {
+        padding: 22px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .grid.cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid.cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .grid.cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .field label,
+      .legend {
+        font-size: 0.92rem;
+        font-weight: 700;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: #fff;
+        font: inherit;
+        color: inherit;
+      }
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        outline: 2px solid rgba(31, 122, 95, 0.22);
+        border-color: var(--accent);
+      }
+
+      fieldset {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-width: 0;
+      }
+
+      .choice-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .choice {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+      }
+
+      .choice input {
+        width: auto;
+        margin: 0;
+      }
+
+      .stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .soft-panel {
+        padding: 14px;
+        border-radius: 18px;
+        background: var(--accent-soft);
+        border: 1px solid rgba(31, 122, 95, 0.12);
+      }
+
+      .footer-note {
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.7;
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .shell {
+          max-width: none;
+          padding: 0;
+        }
+
+        .hero {
+          margin-bottom: 12px;
+        }
+
+        .actions,
+        .status {
+          display: none;
+        }
+
+        .section {
+          box-shadow: none;
+          border-radius: 14px;
+          break-inside: avoid;
+        }
+
+        .section-header {
+          background: #fff;
+        }
+
+        input,
+        textarea,
+        select,
+        .choice {
+          border-color: #b6b6b6;
+        }
+      }
+
+      @media (max-width: 920px) {
+        .grid.cols-2,
+        .grid.cols-3,
+        .grid.cols-4 {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="hero">
+        <div class="eyebrow">Solar Workflow MVP</div>
+        <h1>再生能源發電設備併聯審查申請表</h1>
+        <div class="document-note">114 年 03 月 11 日修正版欄位結構</div>
+        <p>
+          先把案件資料集中填進來，讓同一批資料不要一直重填。這版先處理併聯審查申請表欄位，
+          已加上本機草稿暫存與 JSON 匯出，方便你們拿真實案件測流程。
+        </p>
+        <div class="actions">
+          <button class="primary" type="button" id="saveDraft">儲存草稿</button>
+          <button class="primary" type="button" id="exportPdf">匯出 PDF</button>
+          <button class="secondary" type="button" id="exportJson">匯出 JSON</button>
+          <button class="danger" type="button" id="clearDraft">清空草稿</button>
+        </div>
+        <div class="status" id="status"></div>
+      </div>
+
+      <form id="reviewForm">
+        <section class="section">
+          <div class="section-header">
+            <h2>基本資料</h2>
+            <p>先收案件身分、窗口與場址資訊。</p>
+          </div>
+          <div class="section-body">
+            <div class="grid cols-4">
+              <div class="field">
+                <label for="caseNumber">編號</label>
+                <input id="caseNumber" name="caseNumber" type="text" />
+              </div>
+              <div class="field">
+                <label for="districtOffice">區處</label>
+                <input id="districtOffice" name="districtOffice" type="text" />
+              </div>
+              <div class="field">
+                <label for="applicationDate">申請日期</label>
+                <input id="applicationDate" name="applicationDate" type="date" />
+              </div>
+              <div class="field">
+                <label for="meterNumber">電號</label>
+                <input id="meterNumber" name="meterNumber" type="text" />
+              </div>
+            </div>
+
+            <div class="grid cols-3">
+              <div class="field">
+                <label for="ownerName">設置者名稱</label>
+                <input id="ownerName" name="ownerName" type="text" />
+              </div>
+              <div class="field">
+                <label for="principalName">負責人</label>
+                <input id="principalName" name="principalName" type="text" />
+              </div>
+              <div class="field">
+                <label for="ownerPhone">連絡電話</label>
+                <input id="ownerPhone" name="ownerPhone" type="tel" />
+              </div>
+            </div>
+
+            <div class="grid cols-2">
+              <div class="field">
+                <label for="ownerAddress">通訊處</label>
+                <input id="ownerAddress" name="ownerAddress" type="text" />
+              </div>
+              <div class="field">
+                <label for="siteAddress">設置場所或地點</label>
+                <input id="siteAddress" name="siteAddress" type="text" />
+              </div>
+            </div>
+
+            <div class="grid cols-3">
+              <div class="field">
+                <label for="contactPerson">連絡人</label>
+                <input id="contactPerson" name="contactPerson" type="text" />
+              </div>
+              <div class="field">
+                <label for="contactPhone">連絡人電話</label>
+                <input id="contactPhone" name="contactPhone" type="tel" />
+              </div>
+              <div class="field">
+                <label for="contactAddress">連絡人通訊處</label>
+                <input id="contactAddress" name="contactAddress" type="text" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <h2>設備型別與能源類別</h2>
+            <p>這區是後續法規判斷和文件分支的核心。</p>
+          </div>
+          <div class="section-body">
+            <fieldset class="field">
+              <div class="legend">再生能源發電設備型別</div>
+              <div class="choice-group">
+                <label class="choice"><input type="radio" name="equipmentType" value="第一型" />第一型</label>
+                <label class="choice"><input type="radio" name="equipmentType" value="第二型" />第二型</label>
+                <label class="choice"><input type="radio" name="equipmentType" value="第三型" />第三型</label>
+              </div>
+            </fieldset>
+
+            <fieldset class="field">
+              <div class="legend">再生能源類別</div>
+              <div class="choice-group">
+                <label class="choice"><input type="radio" name="energyType" value="太陽光電" />太陽光電</label>
+                <label class="choice"><input type="radio" name="energyType" value="小水力" />小水力</label>
+                <label class="choice"><input type="radio" name="energyType" value="生質能" />生質能</label>
+                <label class="choice"><input type="radio" name="energyType" value="風力" />風力</label>
+                <label class="choice"><input type="radio" name="energyType" value="地熱能" />地熱能</label>
+                <label class="choice"><input type="radio" name="energyType" value="廢棄物" />廢棄物</label>
+                <label class="choice"><input type="radio" name="energyType" value="氫能" />氫能</label>
+                <label class="choice"><input type="radio" name="energyType" value="燃料電池" />燃料電池</label>
+                <label class="choice"><input type="radio" name="energyType" value="海洋能" />海洋能</label>
+              </div>
+            </fieldset>
+
+            <div class="grid cols-2">
+              <fieldset class="field soft-panel">
+                <div class="legend">設置分類：太陽光電</div>
+                <div class="choice-group">
+                  <label class="choice"><input type="radio" name="solarCategory" value="屋頂" />屋頂</label>
+                  <label class="choice"><input type="radio" name="solarCategory" value="地面" />地面</label>
+                  <label class="choice"><input type="radio" name="solarCategory" value="水面" />水面</label>
+                </div>
+              </fieldset>
+
+              <fieldset class="field soft-panel">
+                <div class="legend">設置分類：風力</div>
+                <div class="choice-group">
+                  <label class="choice"><input type="radio" name="windCategory" value="陸域" />陸域</label>
+                  <label class="choice"><input type="radio" name="windCategory" value="離岸" />離岸</label>
+                </div>
+              </fieldset>
+            </div>
+
+            <div class="grid cols-2">
+              <fieldset class="field soft-panel">
+                <div class="legend">設置分類：生質能</div>
+                <div class="choice-group">
+                  <label class="choice"><input type="radio" name="biomassCategory" value="無" />無</label>
+                  <label class="choice"><input type="radio" name="biomassCategory" value="有厭氧消化設備" />有厭氧消化設備</label>
+                  <label class="choice"><input type="radio" name="biomassCategory" value="農林植物" />農林植物</label>
+                </div>
+              </fieldset>
+
+              <fieldset class="field soft-panel">
+                <div class="legend">設置分類：廢棄物</div>
+                <div class="choice-group">
+                  <label class="choice"><input type="radio" name="wasteCategory" value="一般" />一般</label>
+                  <label class="choice"><input type="radio" name="wasteCategory" value="農業" />農業</label>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <h2>容量資料</h2>
+            <p>目前先保留原表欄位結構，後面要做公式再接上。</p>
+          </div>
+          <div class="section-body">
+            <div class="grid cols-3">
+              <div class="field">
+                <label for="installedExisting">裝置容量_既設_瓩</label>
+                <input id="installedExisting" name="installedExisting" type="number" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="installedNew">裝置容量_新增設_瓩</label>
+                <input id="installedNew" name="installedNew" type="number" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="installedTotal">裝置容量_合計_瓩</label>
+                <input id="installedTotal" name="installedTotal" type="number" step="0.01" />
+              </div>
+            </div>
+
+            <div class="grid cols-3">
+              <div class="field">
+                <label for="saleExisting">躉售容量_既設_瓩</label>
+                <input id="saleExisting" name="saleExisting" type="number" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="saleNew">躉售容量_新增設_瓩</label>
+                <input id="saleNew" name="saleNew" type="number" step="0.01" />
+              </div>
+              <div class="field">
+                <label for="saleTotal">躉售容量_合計_瓩</label>
+                <input id="saleTotal" name="saleTotal" type="number" step="0.01" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <h2>併聯與售電方式</h2>
+            <p>這一區之後會直接影響你們要生成哪種文件內容。</p>
+          </div>
+          <div class="section-body">
+            <fieldset class="field">
+              <div class="legend">預計併聯方式</div>
+              <div class="choice-group">
+                <label class="choice"><input type="radio" name="parallelMode" value="併聯台電外線" />併聯台電外線</label>
+                <label class="choice"><input type="radio" name="parallelMode" value="併聯用戶內線" />併聯用戶內線</label>
+              </div>
+            </fieldset>
+
+            <div class="grid cols-3">
+              <div class="field">
+                <label for="internalMeterNumber">併聯用戶內線_電號</label>
+                <input id="internalMeterNumber" name="internalMeterNumber" type="text" />
+              </div>
+              <div class="field">
+                <label for="contractType">併聯用戶內線_契約種別</label>
+                <input id="contractType" name="contractType" type="text" />
+              </div>
+              <div class="field">
+                <label for="contractCapacity">併聯用戶內線_契約容量_瓩</label>
+                <input id="contractCapacity" name="contractCapacity" type="number" step="0.01" />
+              </div>
+            </div>
+
+            <fieldset class="field">
+              <div class="legend">售電方式</div>
+              <div class="choice-group">
+                <label class="choice"><input type="radio" name="saleMode" value="僅併聯不躉售" />僅併聯不躉售</label>
+                <label class="choice"><input type="radio" name="saleMode" value="全額躉售" />全額躉售</label>
+                <label class="choice"><input type="radio" name="saleMode" value="自發自用(餘電躉售)" />自發自用(餘電躉售)</label>
+                <label class="choice"><input type="radio" name="saleMode" value="直供餘電躉售" />直供餘電躉售</label>
+                <label class="choice"><input type="radio" name="saleMode" value="轉供餘電躉售" />轉供餘電躉售</label>
+                <label class="choice"><input type="radio" name="saleMode" value="轉供自用" />轉供自用</label>
+              </div>
+            </fieldset>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <h2>電壓與時程</h2>
+            <p>把責任分界點、併聯點與預計時程先收好。</p>
+          </div>
+          <div class="section-body">
+            <div class="grid cols-3">
+              <div class="field">
+                <label for="boundaryPhase">責任分界點電壓_相</label>
+                <input id="boundaryPhase" name="boundaryPhase" type="text" />
+              </div>
+              <div class="field">
+                <label for="boundaryWire">責任分界點電壓_線</label>
+                <input id="boundaryWire" name="boundaryWire" type="text" />
+              </div>
+              <div class="field">
+                <label for="boundaryVolt">責任分界點電壓_伏</label>
+                <input id="boundaryVolt" name="boundaryVolt" type="text" />
+              </div>
+            </div>
+
+            <div class="grid cols-4">
+              <div class="field">
+                <label for="parallelPointPhase">併聯點電壓_相</label>
+                <input id="parallelPointPhase" name="parallelPointPhase" type="text" />
+              </div>
+              <div class="field">
+                <label for="parallelPointWire">併聯點電壓_線</label>
+                <input id="parallelPointWire" name="parallelPointWire" type="text" />
+              </div>
+              <div class="field">
+                <label for="parallelPointVolt">併聯點電壓_伏</label>
+                <input id="parallelPointVolt" name="parallelPointVolt" type="text" />
+              </div>
+              <div class="field">
+                <label for="estimatedParallelDate">預計併聯日期</label>
+                <input id="estimatedParallelDate" name="estimatedParallelDate" type="date" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <h2>案件補充與申請選項</h2>
+            <p>這區多半是流程層面的欄位，後面可以跟送件進度綁一起。</p>
+          </div>
+          <div class="section-body">
+            <div class="grid cols-2">
+              <div class="field">
+                <label for="relatedCaseNumbers">與本案相關案件編號</label>
+                <textarea id="relatedCaseNumbers" name="relatedCaseNumbers" placeholder="可輸入多筆，換行分隔"></textarea>
+              </div>
+              <div class="field">
+                <label for="otherNotes">其他事項</label>
+                <textarea id="otherNotes" name="otherNotes"></textarea>
+              </div>
+            </div>
+
+            <div class="grid cols-2">
+              <div class="stack soft-panel">
+                <fieldset class="field">
+                  <div class="legend">細部協商需求</div>
+                  <div class="choice-group">
+                    <label class="choice"><input type="radio" name="detailNegotiationNeed" value="需" />需</label>
+                    <label class="choice"><input type="radio" name="detailNegotiationNeed" value="不需" />不需</label>
+                  </div>
+                </fieldset>
+                <div class="field">
+                  <label for="detailNegotiationDate">細部協商勾選日期</label>
+                  <input id="detailNegotiationDate" name="detailNegotiationDate" type="date" />
+                </div>
+              </div>
+
+              <div class="stack soft-panel">
+                <fieldset class="field">
+                  <div class="legend">外線設計需求</div>
+                  <div class="choice-group">
+                    <label class="choice"><input type="radio" name="lineDesignNeed" value="需" />需</label>
+                    <label class="choice"><input type="radio" name="lineDesignNeed" value="不需" />不需</label>
+                  </div>
+                </fieldset>
+                <div class="field">
+                  <label for="lineDesignDate">外線設計勾選日期</label>
+                  <input id="lineDesignDate" name="lineDesignDate" type="date" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <h2>簽章與內部欄位</h2>
+            <p>目前先用文字暫存，之後可以再接電子簽名或內部流程節點。</p>
+          </div>
+          <div class="section-body">
+            <div class="grid cols-4">
+              <div class="field">
+                <label for="applicantSignature">申請人簽章</label>
+                <input id="applicantSignature" name="applicantSignature" type="text" placeholder="先填姓名或簽章代碼" />
+              </div>
+              <div class="field">
+                <label for="districtApproval">區處核章欄</label>
+                <input id="districtApproval" name="districtApproval" type="text" />
+              </div>
+              <div class="field">
+                <label for="businessApproval">營業部門核章</label>
+                <input id="businessApproval" name="businessApproval" type="text" />
+              </div>
+              <div class="field">
+                <label for="planningApproval">規劃部門核章</label>
+                <input id="planningApproval" name="planningApproval" type="text" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <p class="footer-note">
+          這版先做 `資料蒐集表`，還沒接 PDF 排版、欄位驗證規則、附件管理與台電送件流程。
+          下一步如果要接系統，我會建議先補 `必填/選填規則` 跟 `欄位對應 PDF 模板`。
+        </p>
+      </form>
+    </div>
+
+    <script>
+      const storageKey = "solar_parallel_review_form_draft_v1";
+      const form = document.getElementById("reviewForm");
+      const status = document.getElementById("status");
+
+      function setStatus(message) {
+        status.textContent = message;
+        window.clearTimeout(setStatus.timer);
+        setStatus.timer = window.setTimeout(() => {
+          status.textContent = "";
+        }, 3000);
+      }
+
+      function getFormData() {
+        const formData = new FormData(form);
+        const data = {};
+        for (const [key, value] of formData.entries()) {
+          data[key] = value;
+        }
+        return data;
+      }
+
+      function fillForm(data) {
+        for (const [key, value] of Object.entries(data || {})) {
+          const fields = form.elements.namedItem(key);
+          if (!fields) continue;
+
+          if (fields instanceof RadioNodeList) {
+            fields.value = value;
+            continue;
+          }
+
+          fields.value = value;
+        }
+      }
+
+      function saveDraft() {
+        localStorage.setItem(storageKey, JSON.stringify(getFormData()));
+        setStatus("草稿已存到本機瀏覽器。");
+      }
+
+      function loadDraft() {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return;
+        try {
+          fillForm(JSON.parse(raw));
+          setStatus("已載入上次草稿。");
+        } catch {
+          setStatus("草稿讀取失敗，已略過。");
+        }
+      }
+
+      function exportJson() {
+        const payload = JSON.stringify(getFormData(), null, 2);
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "parallel-review-application.json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setStatus("JSON 已匯出。");
+      }
+
+      function clearDraft() {
+        localStorage.removeItem(storageKey);
+        form.reset();
+        setStatus("本機草稿已清空。");
+      }
+
+      function exportPdf() {
+        saveDraft();
+        setStatus("已開啟列印視窗，可另存成 PDF。");
+        window.print();
+      }
+
+      document.getElementById("saveDraft").addEventListener("click", saveDraft);
+      document.getElementById("exportPdf").addEventListener("click", exportPdf);
+      document.getElementById("exportJson").addEventListener("click", exportJson);
+      document.getElementById("clearDraft").addEventListener("click", clearDraft);
+      form.addEventListener("change", saveDraft);
+
+      loadDraft();
+    </script>
+  </body>
+</html>
