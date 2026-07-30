@@ -479,13 +479,6 @@
               </div>
             </fieldset>
 
-            <div class="grid cols-1">
-              <div class="field">
-                <label for="internalMeterNumber">併聯用戶內線_電號</label>
-                <input id="internalMeterNumber" name="internalMeterNumber" type="text" />
-              </div>
-            </div>
-
             <fieldset class="field">
               <div class="legend">售電方式</div>
               <div class="choice-group">
@@ -604,12 +597,25 @@
         drawText(page, font, content, x, yFromTop, size);
       }
 
+      function drawCenteredText(page, font, text, leftX, rightX, yFromTop, maxSize = 11, minSize = 8.5) {
+        const content = normalizeText(text);
+        if (!content) return;
+        const maxWidth = Math.max(rightX - leftX, 0);
+        let size = maxSize;
+        while (size > minSize && font.widthOfTextAtSize(content, size) > maxWidth) {
+          size -= 0.5;
+        }
+        const contentWidth = font.widthOfTextAtSize(content, size);
+        const x = leftX + Math.max((maxWidth - contentWidth) / 2, 0);
+        drawText(page, font, content, x, yFromTop, size);
+      }
+
       function drawDateParts(page, font, dateValue, coords) {
         const parts = toRocDateParts(dateValue);
         if (!parts) return;
-        drawText(page, font, parts.year, coords.yearX, coords.y, coords.size || 12);
-        drawText(page, font, parts.month, coords.monthX, coords.y, coords.size || 12);
-        drawText(page, font, parts.day, coords.dayX, coords.y, coords.size || 12);
+        drawFittedText(page, font, parts.year, coords.yearX, coords.y, coords.yearWidth || 18, coords.size || 12, 9);
+        drawFittedText(page, font, parts.month, coords.monthX, coords.y, coords.monthWidth || 12, coords.size || 12, 9);
+        drawFittedText(page, font, parts.day, coords.dayX, coords.y, coords.dayWidth || 12, coords.size || 12, 9);
       }
 
       function drawMark(page, font, x, yFromTop, mark = "■", size = 12) {
@@ -619,6 +625,16 @@
           size,
           font,
           color: rgb(0, 0, 0),
+        });
+      }
+
+      function clearBox(page, x, yFromTop, width, height) {
+        page.drawRectangle({
+          x,
+          y: toPdfY(page, yFromTop + height),
+          width,
+          height,
+          color: rgb(1, 1, 1),
         });
       }
 
@@ -663,9 +679,21 @@
         const wire = wireMatch ? wireMatch[1] : "";
         const volt = voltMatch ? voltMatch[1] : numericTokens[numericTokens.length - 1] || "";
 
-        drawText(page, font, phase, coords.phaseX, coords.y, coords.size || 11);
-        drawText(page, font, wire, coords.wireX, coords.y, coords.size || 11);
-        drawText(page, font, volt, coords.voltX, coords.y, coords.size || 11);
+        if (coords.phaseRange) {
+          drawCenteredText(page, font, phase, coords.phaseRange[0], coords.phaseRange[1], coords.y, coords.size || 11, 8.5);
+        } else {
+          drawText(page, font, phase, coords.phaseX, coords.y, coords.size || 11);
+        }
+        if (coords.wireRange) {
+          drawCenteredText(page, font, wire, coords.wireRange[0], coords.wireRange[1], coords.y, coords.size || 11, 8.5);
+        } else {
+          drawText(page, font, wire, coords.wireX, coords.y, coords.size || 11);
+        }
+        if (coords.voltRange) {
+          drawCenteredText(page, font, volt, coords.voltRange[0], coords.voltRange[1], coords.y, coords.size || 11, 8.5);
+        } else {
+          drawText(page, font, volt, coords.voltX, coords.y, coords.size || 11);
+        }
       }
 
       function setStatus(message) {
@@ -761,21 +789,24 @@
           const data = getFormData();
 
           drawDateParts(page1, font, data.applicationDate, {
-            yearX: 114,
-            monthX: 138,
-            dayX: 163,
+            yearX: 106,
+            yearWidth: 22,
+            monthX: 136,
+            monthWidth: 14,
+            dayX: 162,
+            dayWidth: 14,
             y: 165,
             size: 11.5,
           });
 
-          drawFittedText(page1, font, data.ownerName, 160, 205, 108, 12, 9);
-          drawFittedText(page1, font, data.principalName, 340, 205, 92, 12, 9);
-          drawFittedText(page1, font, data.ownerAddress, 160, 244, 108, 11, 8.5);
-          drawFittedText(page1, font, data.ownerPhone, 340, 244, 185, 11, 8.5);
-          drawFittedText(page1, font, data.siteAddress, 160, 278, 370, 11, 8.5);
-          drawFittedText(page1, font, data.contactPerson, 160, 310, 108, 12, 9);
-          drawFittedText(page1, font, data.contactAddress, 340, 289, 185, 11, 8.5);
-          drawFittedText(page1, font, data.contactPhone, 340, 312, 185, 11, 8.5);
+          drawFittedText(page1, font, data.ownerName, 156, 207, 112, 12, 9);
+          drawFittedText(page1, font, data.principalName, 340, 207, 94, 12, 9);
+          drawFittedText(page1, font, data.ownerAddress, 156, 240, 110, 10.5, 8.5);
+          drawFittedText(page1, font, data.ownerPhone, 340, 240, 188, 11, 8.5);
+          drawFittedText(page1, font, data.siteAddress, 156, 273, 372, 10.5, 8);
+          drawFittedText(page1, font, data.contactPerson, 156, 311, 112, 12, 9);
+          drawFittedText(page1, font, data.contactAddress, 340, 287, 188, 10.5, 8);
+          drawFittedText(page1, font, data.contactPhone, 340, 311, 188, 11, 8.5);
 
           drawMark(page1, font, 264, 347, "■", 11);
           drawMark(page1, font, 129, 386, "■", 11);
@@ -790,10 +821,10 @@
             drawMark(page1, font, mark.x, mark.y, "■", 11);
           }
 
-          drawText(page1, font, data.installedNew, 198, 516, 11);
-          drawText(page1, font, data.installedTotal, 198, 538, 11);
-          drawText(page1, font, data.saleNew, 456, 516, 11);
-          drawText(page1, font, data.saleTotal, 456, 538, 11);
+          drawCenteredText(page1, font, data.installedNew, 182, 246, 517, 11, 8.5);
+          drawCenteredText(page1, font, data.installedTotal, 182, 246, 538, 11, 8.5);
+          drawCenteredText(page1, font, data.saleNew, 442, 488, 517, 11, 8.5);
+          drawCenteredText(page1, font, data.saleTotal, 442, 488, 538, 11, 8.5);
 
           const parallelModeMarks = {
             併聯台電外線: { x: 128, y: 590 },
@@ -803,8 +834,6 @@
             const mark = parallelModeMarks[data.parallelMode];
             drawMark(page1, font, mark.x, mark.y, "■", 11);
           }
-          drawText(page1, font, data.internalMeterNumber, 265, 612, 11);
-
           const saleModeMarks = {
             "僅併聯不躉售": { x: 394, y: 558 },
             "全額躉售": { x: 394, y: 579 },
@@ -818,18 +847,17 @@
             drawMark(page1, font, mark.x, mark.y, "■", 11);
           }
 
-          drawVoltageParts(page1, font, data.boundaryVoltage, {
-            phaseX: 123,
-            wireX: 162,
-            voltX: 188,
-            y: 699,
-            size: 11,
-          });
-          drawText(page1, font, data.parallelPointVoltage, 125, 731, 11);
+          clearBox(page1, 114, 686, 132, 25);
+          clearBox(page1, 114, 720, 132, 25);
+          drawFittedText(page1, font, data.boundaryVoltage, 118, 702, 124, 10.5, 8.5);
+          drawFittedText(page1, font, data.parallelPointVoltage, 118, 733, 124, 10.5, 8.5);
           drawDateParts(page1, font, data.estimatedParallelDate, {
             yearX: 136,
+            yearWidth: 28,
             monthX: 197,
+            monthWidth: 18,
             dayX: 226,
+            dayWidth: 18,
             y: 764,
             size: 11.5,
           });
