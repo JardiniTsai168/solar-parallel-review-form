@@ -30,6 +30,7 @@
           radial-gradient(circle at top left, rgba(31, 122, 95, 0.15), transparent 26%),
           radial-gradient(circle at top right, rgba(196, 119, 44, 0.14), transparent 24%),
           linear-gradient(180deg, #fbf7f1 0%, var(--bg) 100%);
+        padding-bottom: 32px;
       }
 
       .shell {
@@ -84,6 +85,7 @@
         border: 0;
         border-radius: 999px;
         padding: 12px 18px;
+        min-height: 48px;
         font: inherit;
         font-weight: 700;
         cursor: pointer;
@@ -249,13 +251,15 @@
         border: 1px solid var(--line);
         border-radius: 14px;
         padding: 12px 14px;
+        min-height: 52px;
         background: #fff;
         font: inherit;
+        font-size: 16px;
         color: inherit;
       }
 
       textarea {
-        min-height: 110px;
+        min-height: 130px;
         resize: vertical;
       }
 
@@ -284,6 +288,7 @@
         align-items: center;
         gap: 8px;
         padding: 10px 14px;
+        min-height: 52px;
         background: #fff;
         border: 1px solid var(--line);
         border-radius: 999px;
@@ -359,6 +364,127 @@
         .grid.cols-3,
         .grid.cols-4 {
           grid-template-columns: 1fr;
+        }
+
+        .choice-group {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding-bottom: 96px;
+        }
+
+        .shell {
+          padding: 16px 14px 88px;
+        }
+
+        .hero {
+          gap: 10px;
+          margin-bottom: 16px;
+          padding: 20px 18px;
+          border-radius: 22px;
+        }
+
+        h1 {
+          font-size: clamp(1.7rem, 7vw, 2.2rem);
+          line-height: 1.08;
+        }
+
+        .hero p,
+        .section-header p,
+        .footer-note {
+          font-size: 0.92rem;
+          line-height: 1.65;
+        }
+
+        .document-note {
+          width: 100%;
+          justify-content: center;
+          text-align: center;
+        }
+
+        .overview {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .overview-card {
+          padding: 12px 14px;
+        }
+
+        .section {
+          border-radius: 20px;
+        }
+
+        .section-header {
+          padding: 16px 18px;
+        }
+
+        .section-body,
+        .section-body.tight {
+          padding: 18px;
+          gap: 12px;
+        }
+
+        .actions {
+          position: sticky;
+          bottom: 12px;
+          z-index: 6;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          padding: 10px;
+          margin-top: 10px;
+          border: 1px solid rgba(216, 205, 192, 0.95);
+          border-radius: 22px;
+          background: rgba(255, 251, 247, 0.94);
+          backdrop-filter: blur(14px);
+          box-shadow: 0 18px 40px rgba(47, 42, 36, 0.12);
+        }
+
+        .actions button {
+          width: 100%;
+          padding: 12px 14px;
+          font-size: 0.95rem;
+        }
+
+        #saveDraft {
+          grid-column: 1 / -1;
+        }
+
+        .choice-group {
+          grid-template-columns: 1fr;
+        }
+
+        .choice {
+          border-radius: 18px;
+        }
+
+        .field label,
+        .legend {
+          font-size: 0.9rem;
+        }
+
+        .hint {
+          font-size: 0.8rem;
+        }
+
+        .value-chip {
+          min-height: 52px;
+          border-radius: 16px;
+          padding: 12px;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .actions {
+          grid-template-columns: 1fr;
+        }
+
+        #saveDraft {
+          grid-column: auto;
         }
       }
     </style>
