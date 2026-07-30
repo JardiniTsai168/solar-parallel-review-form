@@ -332,7 +332,7 @@
         </p>
         <div class="actions">
           <button class="primary" type="button" id="saveDraft">儲存草稿</button>
-          <button class="primary" type="button" id="exportPdf">匯出 PDF</button>
+          <button class="primary" type="button" id="exportPdf">匯出官方 PDF</button>
           <button class="secondary" type="button" id="exportJson">匯出 JSON</button>
           <button class="danger" type="button" id="clearDraft">清空草稿</button>
         </div>
@@ -543,10 +543,123 @@
       </form>
     </div>
 
+    <script src="./vendor/pdf-lib.min.js"></script>
+    <script src="./vendor/fontkit.umd.min.js"></script>
     <script>
       const storageKey = "solar_parallel_review_form_draft_v1";
       const form = document.getElementById("reviewForm");
       const status = document.getElementById("status");
+      const { PDFDocument, rgb } = PDFLib;
+
+      const pdfAssets = {
+        template: "./assets/official-template.pdf",
+        font: "./assets/NotoSansTC.ttf",
+      };
+
+      function toPdfY(page, yFromTop) {
+        return page.getHeight() - yFromTop;
+      }
+
+      function toRocDateParts(dateValue) {
+        if (!dateValue) return null;
+        const [year, month, day] = dateValue.split("-").map(Number);
+        if (!year || !month || !day) return null;
+        return {
+          year: String(year - 1911),
+          month: String(month),
+          day: String(day),
+        };
+      }
+
+      function normalizeText(value) {
+        return (value || "").toString().trim();
+      }
+
+      function drawText(page, font, text, x, yFromTop, size = 11) {
+        const content = normalizeText(text);
+        if (!content) return;
+        page.drawText(content, {
+          x,
+          y: toPdfY(page, yFromTop),
+          size,
+          font,
+          color: rgb(0, 0, 0),
+        });
+      }
+
+      function drawFittedText(page, font, text, x, yFromTop, maxWidth, maxSize = 11, minSize = 8.5) {
+        const content = normalizeText(text);
+        if (!content) return;
+        let size = maxSize;
+        while (size > minSize && font.widthOfTextAtSize(content, size) > maxWidth) {
+          size -= 0.5;
+        }
+        drawText(page, font, content, x, yFromTop, size);
+      }
+
+      function drawDateParts(page, font, dateValue, coords) {
+        const parts = toRocDateParts(dateValue);
+        if (!parts) return;
+        drawText(page, font, parts.year, coords.yearX, coords.y, coords.size || 12);
+        drawText(page, font, parts.month, coords.monthX, coords.y, coords.size || 12);
+        drawText(page, font, parts.day, coords.dayX, coords.y, coords.size || 12);
+      }
+
+      function drawMark(page, font, x, yFromTop, mark = "■", size = 12) {
+        page.drawText(mark, {
+          x,
+          y: toPdfY(page, yFromTop),
+          size,
+          font,
+          color: rgb(0, 0, 0),
+        });
+      }
+
+      function drawWrappedText(page, font, text, box, size = 10.5, lineGap = 3) {
+        const content = normalizeText(text);
+        if (!content) return;
+        const paragraphs = content.split(/\n+/).filter(Boolean);
+        const lines = [];
+
+        for (const paragraph of paragraphs) {
+          let current = "";
+          for (const char of paragraph) {
+            const next = current + char;
+            if (font.widthOfTextAtSize(next, size) <= box.width) {
+              current = next;
+            } else {
+              if (current) lines.push(current);
+              current = char;
+            }
+          }
+          if (current) lines.push(current);
+        }
+
+        let currentY = box.y;
+        for (const line of lines) {
+          if (currentY > box.y + box.height) break;
+          drawText(page, font, line, box.x, currentY, size);
+          currentY += size + lineGap;
+        }
+      }
+
+      function drawVoltageParts(page, font, value, coords) {
+        const content = normalizeText(value);
+        if (!content) return;
+
+        const phaseMatch = content.match(/(單相|三相|單|三)/);
+        const wireMatch = content.match(/([0-9]+)\s*線/);
+        const voltMatch = content.match(/([0-9]+(?:\/[0-9]+)?)\s*伏/);
+        const numericTokens = content.match(/[0-9]+(?:\/[0-9]+)?/g) || [];
+
+        const phase = phaseMatch ? phaseMatch[1].replace("相", "") : content;
+        const wire = wireMatch ? wireMatch[1] : "";
+        const volt = voltMatch ? voltMatch[1] : numericTokens[numericTokens.length - 1] || "";
+
+        drawText(page, font, phase, coords.phaseX, coords.y, coords.size || 11);
+        drawText(page, font, wire, coords.wireX, coords.y, coords.size || 11);
+        drawText(page, font, volt, coords.voltX, coords.y, coords.size || 11);
+      }
 
       function setStatus(message) {
         status.textContent = message;
@@ -615,10 +728,118 @@
         setStatus("本機草稿已清空。");
       }
 
-      function exportPdf() {
+      async function exportPdf() {
         saveDraft();
-        setStatus("已開啟列印視窗，可另存成 PDF。");
-        window.print();
+        setStatus("正在產出官方版 PDF...");
+
+        try {
+          const [pdfBytes, fontBytes] = await Promise.all([
+            fetch(pdfAssets.template).then((res) => res.arrayBuffer()),
+            fetch(pdfAssets.font).then((res) => res.arrayBuffer()),
+          ]);
+
+          const pdfDoc = await PDFDocument.load(pdfBytes);
+          pdfDoc.registerFontkit(fontkit);
+          const font = await pdfDoc.embedFont(fontBytes, { subset: false });
+          const [page1, page2] = pdfDoc.getPages();
+          const data = getFormData();
+
+          drawDateParts(page1, font, data.applicationDate, {
+            yearX: 114,
+            monthX: 138,
+            dayX: 163,
+            y: 165,
+            size: 11.5,
+          });
+
+          drawFittedText(page1, font, data.ownerName, 160, 205, 108, 12, 9);
+          drawFittedText(page1, font, data.principalName, 340, 205, 92, 12, 9);
+          drawFittedText(page1, font, data.ownerAddress, 160, 244, 108, 11, 8.5);
+          drawFittedText(page1, font, data.ownerPhone, 340, 244, 185, 11, 8.5);
+          drawFittedText(page1, font, data.siteAddress, 160, 278, 370, 11, 8.5);
+          drawFittedText(page1, font, data.contactPerson, 160, 310, 108, 12, 9);
+          drawFittedText(page1, font, data.contactAddress, 340, 289, 185, 11, 8.5);
+          drawFittedText(page1, font, data.contactPhone, 340, 312, 185, 11, 8.5);
+
+          drawMark(page1, font, 264, 347, "■", 11);
+          drawMark(page1, font, 129, 386, "■", 11);
+
+          const solarCategoryMarks = {
+            屋頂: { x: 442, y: 386 },
+            地面: { x: 483, y: 386 },
+            水面: { x: 522, y: 386 },
+          };
+          if (solarCategoryMarks[data.solarCategory]) {
+            const mark = solarCategoryMarks[data.solarCategory];
+            drawMark(page1, font, mark.x, mark.y, "■", 11);
+          }
+
+          drawText(page1, font, data.installedNew, 198, 516, 11);
+          drawText(page1, font, data.installedTotal, 198, 538, 11);
+          drawText(page1, font, data.saleNew, 456, 516, 11);
+          drawText(page1, font, data.saleTotal, 456, 538, 11);
+
+          const parallelModeMarks = {
+            併聯台電外線: { x: 128, y: 590 },
+            併聯用戶內線: { x: 128, y: 612 },
+          };
+          if (parallelModeMarks[data.parallelMode]) {
+            const mark = parallelModeMarks[data.parallelMode];
+            drawMark(page1, font, mark.x, mark.y, "■", 11);
+          }
+          drawText(page1, font, data.internalMeterNumber, 265, 612, 11);
+
+          const saleModeMarks = {
+            "僅併聯不躉售": { x: 394, y: 558 },
+            "全額躉售": { x: 394, y: 579 },
+            "自發自用(餘電躉售)": { x: 394, y: 601 },
+            "直供餘電躉售": { x: 394, y: 622 },
+            "轉供餘電躉售": { x: 394, y: 643 },
+            "轉供自用": { x: 394, y: 664 },
+          };
+          if (saleModeMarks[data.saleMode]) {
+            const mark = saleModeMarks[data.saleMode];
+            drawMark(page1, font, mark.x, mark.y, "■", 11);
+          }
+
+          drawVoltageParts(page1, font, data.boundaryVoltage, {
+            phaseX: 123,
+            wireX: 162,
+            voltX: 188,
+            y: 699,
+            size: 11,
+          });
+          drawText(page1, font, data.parallelPointVoltage, 125, 731, 11);
+          drawDateParts(page1, font, data.estimatedParallelDate, {
+            yearX: 136,
+            monthX: 197,
+            dayX: 226,
+            y: 764,
+            size: 11.5,
+          });
+
+          drawWrappedText(page2, font, data.otherNotes, {
+            x: 127,
+            y: 49,
+            width: 405,
+            height: 26,
+          });
+
+          const output = await pdfDoc.save();
+          const blob = new Blob([output], { type: "application/pdf" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "再生能源發電設備併聯審查申請表.pdf";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          setStatus("官方版 PDF 已匯出。");
+        } catch (error) {
+          console.error(error);
+          setStatus("官方版 PDF 產出失敗，請稍後再試。");
+        }
       }
 
       document.getElementById("saveDraft").addEventListener("click", saveDraft);
